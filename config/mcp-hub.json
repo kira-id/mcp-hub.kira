@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "context7": {
-      "command": "bunx",
+      "command": "pnpx",
       "args": [
         "@upstash/context7-mcp",
         "--api-key",
@@ -9,25 +9,25 @@
       ]
     },
     "shadcn": {
-      "command": "bunx",
+      "command": "pnpx",
       "args": ["shadcn", "mcp"]
     },
     "tavily": {
-      "command": "bunx",
+      "command": "pnpx",
       "args": ["tavily-mcp"],
       "env": {
         "TAVILY_API_KEY": "${env:TAVILY_API_KEY}"
       }
     },
     "pixabay": {
-      "command": "bunx",
+      "command": "pnpx",
       "args": ["@kira4i/pixabay-mcp-server"],
       "env": {
         "PIXABAY_API_KEY": "${env:PIXABAY_API_KEY}"
       }
     },
     "unsplash": {
-      "command": "bunx",
+      "command": "pnpx",
       "args": ["@violent-madman/unsplash-mcp"],
       "env": {
         "UNSPLASH_ACCESS_KEY": "${env:UNSPLASH_ACCESS_KEY}"

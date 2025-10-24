@@ -1,46 +1,57 @@
-# MCP Hub Setup
+![mcp-hub.kira. One hub. Many MCP clients. Ready to use](assets/header.png "mcp-hub.kira. One hub. Many MCP clients. Ready to use")
 
-This repository contains a ready-to-run [mcp-hub](https://www.npmjs.com/package/mcp-hub) configuration that aggregates multiple MCP servers behind a single endpoint.
+## Made with ❤️ by the Kira.id open-source AI research team
 
-## Files
+This repository ships a ready-to-run [mcp-hub](https://www.npmjs.com/package/mcp-hub) configuration so you can aggregate multiple MCP servers behind one HTTP endpoint.
 
-- `config/mcp-hub.json` — Hub configuration that starts each STDIO MCP server with `bunx`
-- `.env.example` — Copy to `.env` and fill in the required API tokens
+## Repository Layout
 
-## Prerequisites
+- `config/mcp-hub.json` — Sample hub configuration that launches each STDIO MCP server through `npx`.
+- `.env.example` — Environment template; copy to `.env` and fill in your API tokens.
+- `scripts/install-mcp-hub.sh` — Helper that builds the bundled `mcp-hub` CLI once per machine using npm.
+
+## Requirements
 
 - Node.js 18 or newer
-- `bun` (recommended) or `npm`
+- npm 9+ (bundled with Node.js 18) — includes `npx`
 
-```bash
-# Setup
-curl -fsSL https://bun.sh/install | bash
-# reload your shell profile so bun (and bunx) are on PATH
-source ~/.bashrc
-# if you use zsh
-# source ~/.zshrc
-```
+## Install the Hub Locally
 
-Install the hub globally (only needs to be done once per machine):
+Run the helper script to build and link the CLI from the vendored `mcp-hub` source:
 
 ```bash
 ./scripts/install-mcp-hub.sh
 ```
 
-## Local Usage
+The script runs `npm install` and `npm run build` inside `./mcp-hub`, then symlinks `/usr/local/bin/mcp-hub` to the compiled CLI.
 
-1. Copy the environment template and populate secrets:
-   ```bash
-   cp .env.example .env
-   # edit .env with your real tokens
-   ```
-2. Run the hub:
-   ```bash
-   export $(grep -v '^#' .env | xargs) && mcp-hub --port 37373 --config $(pwd)/config/mcp-hub.json
-   ```
-3. Point MCP clients (Claude Desktop, Cline, etc.) to `http://<host>:37373/mcp`.
+## Configure Secrets
 
-Or add to codex config:
+```bash
+cp .env.example .env
+# edit .env with your real tokens
+```
+
+During local development you can keep the `.env` file in the project root (it is gitignored) or export the variables manually.
+
+## Run the Hub
+
+Load your secrets and start the hub with the provided config:
+
+```bash
+export $(grep -v '^#' .env | xargs) \
+  && mcp-hub --port 37373 --config "$(pwd)/config/mcp-hub.json"
+```
+
+Point MCP clients (Claude Desktop, Cline, etc.) to `http://<host>:37373/mcp`.
+
+Prefer not to install the binary globally? You can also run the published package directly:
+
+```bash
+npx mcp-hub@latest --port 37373 --config "$(pwd)/config/mcp-hub.json"
+```
+
+To add the hub to the Codex CLI configuration:
 
 ````
 experimental_use_rmcp_client = true
@@ -49,14 +60,35 @@ experimental_use_rmcp_client = true
 url = "http://localhost:37373/mcp"
 ````
 
+## Working with `config/mcp-hub.json`
+
+Each entry in `mcpServers` spawns an MCP server using `npx`. Ensure your configuration resembles the following structure:
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "@upstash/context7-mcp",
+        "--api-key",
+        "${env:CONTEXT7_API_KEY}"
+      ]
+    }
+  }
+}
+```
+
+Add or remove servers as needed and keep API keys in your environment rather than hardcoding them.
+
 ## Auth Token Handling
 
-- **Local development** — use `.env` (gitignored) or shell exports.
-- **Shared hosts** — prefer a secret manager (1Password, AWS SSM, Doppler, etc.) and reference them with `${cmd: ...}` in the config if you do not want tokens on disk.
+- **Local development** — load values from `.env` or export them in your shell session.
+- **Shared hosts** — prefer a secret manager (1Password, AWS SSM, Doppler, etc.) and reference them with `${cmd:...}` in the config if you do not want tokens on disk.
 - **Per-user access** — set `MCP_HUB_ENV` before launching the hub so injected values stay isolated per user:
   ```bash
   MCP_HUB_ENV='{"CONTEXT7_API_KEY":"...","UNSPLASH_ACCESS_KEY":"..."}' \
-  mcp-hub --port 37373 --config /path/to/config/mcp-hub.json
+    mcp-hub --port 37373 --config /path/to/config/mcp-hub.json
   ```
 - Rotate API keys periodically and restart the hub (`POST /api/restart` or restart the process) to pick up new values.
 
@@ -66,19 +98,18 @@ url = "http://localhost:37373/mcp"
   1. Create a dedicated user (e.g. `mcp`) that owns the project directory and `.env` file.
   2. Drop a unit in `/etc/systemd/system/mcp-hub.service`:
      ```ini
-     [Unit]
-     Description=MCP Hub
-     After=network.target
+      [Unit]
+      Description=MCP Hub
+      After=network.target
 
-     [Service]
-     Type=simple
-     WorkingDirectory=/home/mcp/projects/kira-mcp-hub
-     EnvironmentFile=/home/mcp/projects/kira-mcp-hub/.env
-     ExecStart=/usr/local/bin/mcp-hub --port 37373 --config /home/mcp/projects/kira-mcp-hub/config/mcp-hub.json
-     Restart=on-failure
+      [Service]
+      Type=simple
+      EnvironmentFile=/home/mcp/projects/mcp-hub.kira/.env
+      ExecStart=/usr/local/bin/mcp-hub --port 37373 --config /home/mcp/projects/mcp-hub.kira/config/mcp-hub.json
+      Restart=on-failure
 
-     [Install]
-     WantedBy=multi-user.target
+      [Install]
+      WantedBy=multi-user.target
      ```
   3. Enable and start it: `sudo systemctl enable --now mcp-hub`.
 - **Docker** — wrap a minimal Node image, copy the config, and inject secrets with Docker secrets or environment variables.
