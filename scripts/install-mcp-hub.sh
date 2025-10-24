@@ -12,7 +12,7 @@ LINK_PATH="/usr/local/bin/${BIN_NAME}"
 # Ensure puppeteer is available for the puppeteer MCP server.
 if ! (cd "${REPO_ROOT}" && npm ls puppeteer >/dev/null 2>&1); then
   echo "Installing puppeteer for MCP servers..."
-  (cd "${REPO_ROOT}" && npm install -g puppeteer)
+  (cd "${REPO_ROOT}" && sudo npm install -g puppeteer)
 fi
 
 cd "${HUB_DIR}"
