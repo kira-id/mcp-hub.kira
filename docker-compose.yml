@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik
+    command:
+      - "--entrypoints.mcp.address=:37373"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      - "--log.level=INFO"
+    ports:
+      - "37373:37373"
+    volumes:
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+    restart: unless-stopped
+    depends_on:
+      - mcp
+
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-hub
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ./config
+        target: /app/config
+        read_only: true
+      - type: bind
+        source: ./.env
+        target: /app/.env
+        read_only: true
+    expose:
+      - "37373"
+    restart: unless-stopped

@@ -1,0 +1,23 @@
+http:
+  routers:
+    mcp:
+      rule: "PathPrefix(`/mcp`)"
+      entryPoints:
+        - mcp
+      service: mcp-svc
+      middlewares:
+        - mcp-ratelimit
+
+  middlewares:
+    # Simple rate limit per client
+    mcp-ratelimit:
+      rateLimit:
+        average: 30   # allow 30 requests per hour
+        period: 1h    # define the 1 hour window
+        burst: 30     # allow short bursts up to 30 requests at once
+
+  services:
+    mcp-svc:
+      loadBalancer:
+        servers:
+          - url: "http://mcp:37373"

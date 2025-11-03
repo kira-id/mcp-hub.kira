@@ -1,0 +1,8 @@
+node_modules
+mcp-hub/node_modules
+.git
+*.log
+traefik
+.env
+.env.*
+.DS_Store
